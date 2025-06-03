@@ -6,41 +6,9 @@ import { Search, Filter, MapPin, Star, ChevronRight } from 'lucide-react-native'
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/Input';
-
-const MOTORCYCLE_DATA = [
-  {
-    id: '1',
-    name: 'Honda CB 500F',
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?q=80&w=300&auto=format&fit=crop',
-    price: 120,
-    rating: 4.8,
-    location: 'São Paulo, SP',
-  },
-  {
-    id: '2',
-    name: 'Yamaha MT-07',
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=300&auto=format&fit=crop',
-    price: 150,
-    rating: 4.9,
-    location: 'Rio de Janeiro, RJ',
-  },
-  {
-    id: '3',
-    name: 'Kawasaki Z900',
-    image: 'https://images.unsplash.com/photo-1580310614729-ccd69652491d?q=80&w=300&auto=format&fit=crop',
-    price: 180,
-    rating: 4.7,
-    location: 'Belo Horizonte, MG',
-  },
-  {
-    id: '4',
-    name: 'BMW G 310 R',
-    image: 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?q=80&w=300&auto=format&fit=crop',
-    price: 200,
-    rating: 4.6,
-    location: 'Curitiba, PR',
-  },
-];
+import MotorcycleSkeleton from '@/components/MotorcycleSkeleton';
+import { useMotorcycles, useFeaturedMotorcycles, useNearbyMotorcycles } from '@/hooks/useMotorcycles';
+import type { MotorcycleFilters } from '@/types/motorcycle';
 
 const CATEGORIES = [
   { id: '1', name: 'Esportivas', icon: '🏍️' },
@@ -52,8 +20,17 @@ const CATEGORIES = [
 export default function HomeScreen() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [featuredMotorcycles, setFeaturedMotorcycles] = useState(MOTORCYCLE_DATA);
-  const [nearbyMotorcycles, setNearbyMotorcycles] = useState(MOTORCYCLE_DATA.slice(0, 2));
+  const [filters, setFilters] = useState<MotorcycleFilters>({});
+  
+  const { 
+    data: featuredMotorcycles,
+    isLoading: isFeaturedLoading 
+  } = useFeaturedMotorcycles();
+  
+  const {
+    data: nearbyMotorcycles,
+    isLoading: isNearbyLoading
+  } = useNearbyMotorcycles(-23.5505, -46.6333); // São Paulo coordinates
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,17 +65,18 @@ export default function HomeScreen() {
             containerStyle={styles.searchInputContainer}
           />
         </View>
-        <View style={styles.adContainer}>
-          <Text style={styles.adText}>Anúncio</Text>
-          <Text style={styles.adText}>Honda</Text>
-        </View>
+
         <View style={styles.categoriesContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Categorias</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
             {CATEGORIES.map((category) => (
-              <TouchableOpacity key={category.id} style={styles.categoryItem}>
+              <TouchableOpacity 
+                key={category.id} 
+                style={styles.categoryItem}
+                onPress={() => setFilters(prev => ({ ...prev, category: category.name }))}
+              >
                 <Text style={styles.categoryIcon}>{category.icon}</Text>
                 <Text style={styles.categoryName}>{category.name}</Text>
               </TouchableOpacity>
@@ -113,32 +91,44 @@ export default function HomeScreen() {
               <Text style={styles.seeAllText}>Ver todas</Text>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={featuredMotorcycles}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.motorcycleCard} onPress={() => router.push(`/motorcycle/${item.id}`)}>
-                <Image source={{ uri: item.image }} style={styles.motorcycleImage} />
-                <View style={styles.motorcycleInfo}>
-                  <Text style={styles.motorcycleName}>{item.name}</Text>
-                  <View style={styles.motorcycleDetails}>
-                    <Text style={styles.motorcyclePrice}>R$ {item.price}/dia</Text>
-                    <View style={styles.ratingContainer}>
-                      <Star size={14} color={colors.secondary} fill={colors.secondary} />
-                      <Text style={styles.ratingText}>{item.rating}</Text>
+          
+          {isFeaturedLoading ? (
+            <View style={styles.motorcycleList}>
+              {[1, 2, 3].map((key) => (
+                <MotorcycleSkeleton key={key} />
+              ))}
+            </View>
+          ) : (
+            <FlatList
+              data={featuredMotorcycles}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={styles.motorcycleCard} 
+                  onPress={() => router.push(`/motorcycle/${item.id}`)}
+                >
+                  <Image source={{ uri: item.image_urls[0] }} style={styles.motorcycleImage} />
+                  <View style={styles.motorcycleInfo}>
+                    <Text style={styles.motorcycleName}>{item.brand} {item.model}</Text>
+                    <View style={styles.motorcycleDetails}>
+                      <Text style={styles.motorcyclePrice}>R$ {item.daily_rate}/dia</Text>
+                      <View style={styles.ratingContainer}>
+                        <Star size={14} color={colors.secondary} fill={colors.secondary} />
+                        <Text style={styles.ratingText}>{item.owner?.rating}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.locationRow}>
+                      <MapPin size={14} color={colors.textLight} />
+                      <Text style={styles.motorcycleLocation}>{item.location}</Text>
                     </View>
                   </View>
-                  <View style={styles.locationRow}>
-                    <MapPin size={14} color={colors.textLight} />
-                    <Text style={styles.motorcycleLocation}>{item.location}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
-            style={styles.motorcycleList}
-          />
+                </TouchableOpacity>
+              )}
+              style={styles.motorcycleList}
+            />
+          )}
         </View>
 
         <View style={styles.nearbyContainer}>
@@ -148,33 +138,39 @@ export default function HomeScreen() {
               <Text style={styles.seeAllText}>Ver todas</Text>
             </TouchableOpacity>
           </View>
-          {nearbyMotorcycles.map((motorcycle) => (
-            <TouchableOpacity 
-              key={motorcycle.id} 
-              style={styles.nearbyItem}
-              onPress={() => router.push(`/motorcycle/${motorcycle.id}`)}
-            >
-              <Image source={{ uri: motorcycle.image }} style={styles.nearbyImage} />
-              <View style={styles.nearbyInfo}>
-                <Text style={styles.nearbyName}>{motorcycle.name}</Text>
-                <View style={styles.nearbyDetails}>
-                  <Text style={styles. nearbyPrice}>R$ {motorcycle.price}/dia</Text>
-                  <View style={styles.ratingContainer}>
-                    <Star size={14} color={colors.secondary} fill={colors.secondary} />
-                    <Text style={styles.ratingText}>{motorcycle.rating}</Text>
+          
+          {isNearbyLoading ? (
+            <View>
+              {[1, 2].map((key) => (
+                <MotorcycleSkeleton key={key} />
+              ))}
+            </View>
+          ) : (
+            nearbyMotorcycles?.map((motorcycle) => (
+              <TouchableOpacity 
+                key={motorcycle.id} 
+                style={styles.nearbyItem}
+                onPress={() => router.push(`/motorcycle/${motorcycle.id}`)}
+              >
+                <Image source={{ uri: motorcycle.image_urls[0] }} style={styles.nearbyImage} />
+                <View style={styles.nearbyInfo}>
+                  <Text style={styles.nearbyName}>{motorcycle.brand} {motorcycle.model}</Text>
+                  <View style={styles.nearbyDetails}>
+                    <Text style={styles.nearbyPrice}>R$ {motorcycle.daily_rate}/dia</Text>
+                    <View style={styles.ratingContainer}>
+                      <Star size={14} color={colors.secondary} fill={colors.secondary} />
+                      <Text style={styles.ratingText}>{motorcycle.owner?.rating}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.locationRow}>
+                    <MapPin size={14} color={colors.textLight} />
+                    <Text style={styles.motorcycleLocation}>{motorcycle.location}</Text>
                   </View>
                 </View>
-                <View style={styles.locationRow}>
-                  <MapPin size={14} color={colors.textLight} />
-                  <Text style={styles.motorcycleLocation}>{motorcycle.location}</Text>
-                </View>
-              </View>
-              <ChevronRight size={20} color={colors.textLight} />
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.adContainer}>
-          <Text style={styles.adText}>Anuncie aqui</Text>
+                <ChevronRight size={20} color={colors.textLight} />
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

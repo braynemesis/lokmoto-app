@@ -1,9 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 
-type UserType = 'renter' | 'owner' | 'admin' | null;
+type UserType = 'renter' | 'owner' | null;
 
 interface User {
   id: string;
@@ -11,6 +11,7 @@ interface User {
   userType: UserType;
   fullName?: string;
   profileComplete?: boolean;
+  verified?: boolean;
 }
 
 interface AuthContextType {
@@ -20,6 +21,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, userType: UserType) => Promise<void>;
   signOut: () => Promise<void>;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
+  isAuthenticated: boolean;
+  isProfileComplete: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,12 +30,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Check for existing session
     checkUser();
 
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
@@ -48,9 +50,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             userType: profile?.user_type || null,
             fullName: profile?.full_name,
             profileComplete: profile?.profile_complete,
+            verified: profile?.verified,
           });
+
+          // Redirecionar baseado no status do perfil
+          if (!profile?.profile_complete) {
+            router.replace(profile?.user_type === 'renter' ? '/auth/renter-profile' : '/auth/owner-profile');
+          } else if (!profile?.verified) {
+            router.replace('/auth/verification-pending');
+          } else {
+            router.replace('/(tabs)');
+          }
         } else {
           setUser(null);
+          queryClient.clear(); // Limpar cache do React Query
+          router.replace('/');
         }
         setLoading(false);
       }
@@ -78,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userType: profile?.user_type || null,
           fullName: profile?.full_name,
           profileComplete: profile?.profile_complete,
+          verified: profile?.verified,
         });
       }
     } catch (error) {
@@ -96,8 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) throw error;
-      
-      // Navigation will happen via the auth state change listener
     } catch (error: any) {
       console.error('Error signing in:', error.message);
       throw error;
@@ -117,7 +130,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       if (data.user) {
-        // Create profile record
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -126,13 +138,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email,
               user_type: userType,
               profile_complete: false,
+              verified: false,
             },
           ]);
 
         if (profileError) throw profileError;
       }
-
-      // Navigation will happen via the auth state change listener
     } catch (error: any) {
       console.error('Error signing up:', error.message);
       throw error;
@@ -147,7 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      router.replace('/auth/login');
+      queryClient.clear(); // Limpar cache do React Query
+      router.replace('/');
     } catch (error: any) {
       console.error('Error signing out:', error.message);
     } finally {
@@ -166,13 +178,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .update({
           full_name: data.fullName,
           profile_complete: data.profileComplete,
-          // Add other fields as needed
+          verified: data.verified,
         })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      // Update local user state
       setUser({ ...user, ...data });
     } catch (error: any) {
       console.error('Error updating profile:', error.message);
@@ -191,6 +202,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         signOut,
         updateUserProfile,
+        isAuthenticated: !!user,
+        isProfileComplete: !!user?.profileComplete,
       }}
     >
       {children}
