@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Search, Filter, MapPin, Star, ChevronRight } from 'lucide-react-native';
+import { Search, Filter, MapPin, Heart, ChevronRight } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/Input';
@@ -11,8 +11,8 @@ import { useMotorcycles, useFeaturedMotorcycles, useNearbyMotorcycles } from '@/
 import type { MotorcycleFilters } from '@/types/motorcycle';
 
 const CATEGORIES = [
-  { id: '1', name: 'Esportivas', icon: '🏍️' },
-  { id: '2', name: 'Urbanas', icon: '🛵' },
+  { id: '1', name: 'Sport', icon: '🏍️' },
+  { id: '2', name: 'Urban', icon: '🛵' },
   { id: '3', name: 'Trail', icon: '🏔️' },
   { id: '4', name: 'Custom', icon: '🔧' },
 ];
@@ -37,7 +37,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Olá, {user?.fullName || 'Usuário'}</Text>
+            <Text style={styles.greeting}>Hello, {user?.fullName || 'Guest'}</Text>
             <View style={styles.locationContainer}>
               <MapPin size={16} color={colors.primary} />
               <Text style={styles.location}>São Paulo, SP</Text>
@@ -45,7 +45,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity style={styles.profileButton}>
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=100&auto=format&fit=crop' }} 
+              source={{ uri: 'https://images.pexels.com/photos/1933873/pexels-photo-1933873.jpeg?auto=compress&cs=tinysrgb&w=100' }} 
               style={styles.profileImage}
             />
           </TouchableOpacity>
@@ -53,7 +53,7 @@ export default function HomeScreen() {
 
         <View style={styles.searchContainer}>
           <Input
-            placeholder="Buscar motos..."
+            placeholder="Search motorcycles..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             leftIcon={<Search size={20} color={colors.textLight} />}
@@ -68,7 +68,7 @@ export default function HomeScreen() {
 
         <View style={styles.categoriesContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Categorias</Text>
+            <Text style={styles.sectionTitle}>Categories</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
             {CATEGORIES.map((category) => (
@@ -86,9 +86,9 @@ export default function HomeScreen() {
 
         <View style={styles.featuredContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Motos em Destaque</Text>
+            <Text style={styles.sectionTitle}>Featured Motorcycles</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/motorcycles')}>
-              <Text style={styles.seeAllText}>Ver todas</Text>
+              <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
           </View>
           
@@ -113,11 +113,10 @@ export default function HomeScreen() {
                   <View style={styles.motorcycleInfo}>
                     <Text style={styles.motorcycleName}>{item.brand} {item.model}</Text>
                     <View style={styles.motorcycleDetails}>
-                      <Text style={styles.motorcyclePrice}>R$ {item.daily_rate}/dia</Text>
-                      <View style={styles.ratingContainer}>
-                        <Star size={14} color={colors.secondary} fill={colors.secondary} />
-                        <Text style={styles.ratingText}>{item.owner?.rating}</Text>
-                      </View>
+                      <Text style={styles.motorcyclePrice}>R$ {item.daily_rate}/day</Text>
+                      <TouchableOpacity>
+                        <Heart size={20} color={colors.textLight} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.locationRow}>
                       <MapPin size={14} color={colors.textLight} />
@@ -133,9 +132,9 @@ export default function HomeScreen() {
 
         <View style={styles.nearbyContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Próximas de Você</Text>
+            <Text style={styles.sectionTitle}>Near You</Text>
             <TouchableOpacity>
-              <Text style={styles.seeAllText}>Ver todas</Text>
+              <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
           </View>
           
@@ -156,11 +155,10 @@ export default function HomeScreen() {
                 <View style={styles.nearbyInfo}>
                   <Text style={styles.nearbyName}>{motorcycle.brand} {motorcycle.model}</Text>
                   <View style={styles.nearbyDetails}>
-                    <Text style={styles.nearbyPrice}>R$ {motorcycle.daily_rate}/dia</Text>
-                    <View style={styles.ratingContainer}>
-                      <Star size={14} color={colors.secondary} fill={colors.secondary} />
-                      <Text style={styles.ratingText}>{motorcycle.owner?.rating}</Text>
-                    </View>
+                    <Text style={styles.nearbyPrice}>R$ {motorcycle.daily_rate}/day</Text>
+                    <TouchableOpacity>
+                      <Heart size={20} color={colors.textLight} />
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.locationRow}>
                     <MapPin size={14} color={colors.textLight} />
@@ -307,16 +305,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 12,
-    color: colors.textDark,
-    marginLeft: 4,
-  },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -368,20 +356,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     fontSize: 14,
     color: colors.primary,
-  },
-  adContainer: {
-    backgroundColor: colors.primary,
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 0,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  adText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 16,
   },
 });

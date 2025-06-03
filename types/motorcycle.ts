@@ -19,8 +19,6 @@ export interface Motorcycle {
     id: string;
     full_name: string;
     company_name?: string;
-    rating?: number;
-    response_time?: string;
     verified?: boolean;
   };
 }

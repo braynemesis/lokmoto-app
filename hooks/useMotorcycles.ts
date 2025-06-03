@@ -10,7 +10,7 @@ export function useMotorcycles(filters?: MotorcycleFilters) {
         .from('motorcycles')
         .select(`
           *,
-          owner:profiles(id, full_name, rating, verified)
+          owner:profiles(id, full_name, verified)
         `)
         .eq('status', 'available');
 
@@ -52,7 +52,6 @@ export function useMotorcycle(id: string) {
           owner:profiles(
             id, 
             full_name,
-            rating,
             verified
           )
         `)
@@ -76,7 +75,7 @@ export function useNearbyMotorcycles(latitude: number, longitude: number, radius
         .from('motorcycles')
         .select(`
           *,
-          owner:profiles(id, full_name, rating, verified)
+          owner:profiles(id, full_name, verified)
         `)
         .eq('status', 'available')
         .limit(5);
@@ -96,10 +95,9 @@ export function useFeaturedMotorcycles() {
         .from('motorcycles')
         .select(`
           *,
-          owner:profiles(id, full_name, rating, verified)
+          owner:profiles(id, full_name, verified)
         `)
         .eq('status', 'available')
-        .order('rating', { ascending: false })
         .limit(5);
 
       if (error) throw error;
