@@ -69,6 +69,9 @@ export default function RootLayout() {
             <Stack.Screen name="auth/login" />
             <Stack.Screen name="auth/register" />
             <Stack.Screen name="auth/onboarding" />
+            <Stack.Screen name="auth/renter-profile" />
+            <Stack.Screen name="auth/owner-profile" />
+            <Stack.Screen name="auth/contract" />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="dark" />
