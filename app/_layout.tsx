@@ -16,7 +16,6 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold 
 } from '@expo-google-fonts/poppins';
-import { ClerkProvider } from '@/context/ClerkProvider';
 import { AuthProvider } from '@/context/AuthContext';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
@@ -59,24 +58,23 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ClerkProvider>
-        <AuthProvider>
-          <Stack screenOptions={{ 
-            headerShown: false,
-            contentStyle: { backgroundColor: '#fff' }
-          }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="auth/login" />
-            <Stack.Screen name="auth/register" />
-            <Stack.Screen name="auth/onboarding" />
-            <Stack.Screen name="auth/renter-profile" />
-            <Stack.Screen name="auth/owner-profile" />
-            <Stack.Screen name="auth/contract" />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style="dark" />
-        </AuthProvider>
-      </ClerkProvider>
+      <AuthProvider>
+        <Stack screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: '#fff' }
+        }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth/login" />
+          <Stack.Screen name="auth/register" />
+          <Stack.Screen name="auth/reset-password" />
+          <Stack.Screen name="auth/onboarding" />
+          <Stack.Screen name="auth/renter-profile" />
+          <Stack.Screen name="auth/owner-profile" />
+          <Stack.Screen name="auth/contract" />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="dark" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

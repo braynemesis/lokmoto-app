@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
 type UserType = 'renter' | 'owner' | null;
 
@@ -18,8 +19,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userType: UserType) => Promise<void>;
+  signUp: (email: string, password: string, userType: UserType, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
   isProfileComplete: boolean;
@@ -35,45 +37,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .maybeSingle();
+            .single();
 
           if (profile) {
             setUser({
               id: session.user.id,
               email: session.user.email || '',
-              userType: profile?.user_type || null,
-              fullName: profile?.full_name,
-              profileComplete: profile?.profile_complete,
-              verified: profile?.verified,
+              userType: profile.user_type,
+              fullName: profile.full_name,
+              profileComplete: profile.profile_complete,
+              verified: profile.verified,
             });
 
-            // Redirecionar baseado no status do perfil
-            if (!profile?.profile_complete) {
-              router.replace(profile?.user_type === 'renter' ? '/auth/renter-profile' : '/auth/owner-profile');
-            } else if (!profile?.verified) {
+            if (!profile.profile_complete) {
+              router.replace(profile.user_type === 'renter' ? '/auth/renter-profile' : '/auth/owner-profile');
+            } else if (!profile.verified) {
               router.replace('/auth/verification-pending');
             } else {
               router.replace('/(tabs)');
             }
-          } else {
-            setUser(null);
-            router.replace('/');
           }
-        } else {
-          setUser(null);
-          queryClient.clear(); // Limpar cache do React Query
-          router.replace('/');
         }
-        setLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        queryClient.clear();
+        router.replace('/');
       }
-    );
+      setLoading(false);
+    });
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -83,22 +81,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function checkUser() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
 
         if (profile) {
           setUser({
             id: session.user.id,
             email: session.user.email || '',
-            userType: profile?.user_type || null,
-            fullName: profile?.full_name,
-            profileComplete: profile?.profile_complete,
-            verified: profile?.verified,
+            userType: profile.user_type,
+            fullName: profile.full_name,
+            profileComplete: profile.profile_complete,
+            verified: profile.verified,
           });
         }
       }
@@ -111,7 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(email: string, password: string) {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -120,15 +116,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (error: any) {
       console.error('Error signing in:', error.message);
+      Alert.alert('Error', error.message);
       throw error;
-    } finally {
-      setLoading(false);
     }
   }
 
-  async function signUp(email: string, password: string, userType: UserType) {
+  async function signUp(email: string, password: string, userType: UserType, fullName: string) {
     try {
-      setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -144,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id: data.user.id,
               email,
               user_type: userType,
+              full_name: fullName,
               profile_complete: false,
               verified: false,
             },
@@ -153,24 +148,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: any) {
       console.error('Error signing up:', error.message);
+      Alert.alert('Error', error.message);
       throw error;
-    } finally {
-      setLoading(false);
     }
   }
 
   async function signOut() {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      queryClient.clear(); // Limpar cache do React Query
+      queryClient.clear();
       router.replace('/');
     } catch (error: any) {
       console.error('Error signing out:', error.message);
-    } finally {
-      setLoading(false);
+      Alert.alert('Error', error.message);
+    }
+  }
+
+  async function resetPassword(email: string) {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) throw error;
+
+      Alert.alert(
+        'Password Reset',
+        'Check your email for password reset instructions.'
+      );
+    } catch (error: any) {
+      console.error('Error resetting password:', error.message);
+      Alert.alert('Error', error.message);
+      throw error;
     }
   }
 
@@ -178,8 +189,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user) throw new Error('No user logged in');
 
-      setLoading(true);
-      
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -194,9 +203,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ ...user, ...data });
     } catch (error: any) {
       console.error('Error updating profile:', error.message);
+      Alert.alert('Error', error.message);
       throw error;
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -208,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signUp,
         signOut,
+        resetPassword,
         updateUserProfile,
         isAuthenticated: !!user,
         isProfileComplete: !!user?.profileComplete,

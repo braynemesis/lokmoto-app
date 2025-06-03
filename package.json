@@ -10,7 +10,6 @@
     "doctor": "npx expo-doctor"
   },
   "dependencies": {
-    "@clerk/clerk-expo": "^1.0.0",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo-google-fonts/poppins": "^0.2.3",
     "@expo/vector-icons": "^14.0.2",
