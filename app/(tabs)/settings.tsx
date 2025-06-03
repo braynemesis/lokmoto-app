@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Bell, Shield, CircleHelp as HelpCircle, LogOut, ChevronRight, MessageCircle, CreditCard, FileText } from 'lucide-react-native';
+import { User, Bell, Shield, HelpCircle as HelpCircle, LogOut, ChevronRight, MessageCircle, CreditCard, FileText } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 

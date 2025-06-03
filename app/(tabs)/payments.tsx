@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CreditCard, Wallet, Receipt, Plus, ChevronRight, ArrowDown, ArrowUp } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
+
+// Import from lucide-react for web platform
+import * as LucideReact from 'lucide-react';
+// Import from lucide-react-native for native platforms
+import * as LucideReactNative from 'lucide-react-native';
+
+// Create a platform-specific icon component
+const Icons = Platform.select({
+  web: LucideReact,
+  default: LucideReactNative,
+});
+
+const { CreditCard, Wallet, Receipt, Plus, ChevronRight, ArrowDown, ArrowUp } = Icons;
 
 const PAYMENT_HISTORY = [
   {
@@ -45,24 +57,6 @@ export default function PaymentsScreen() {
 
   const renderWalletTab = () => (
     <View style={styles.tabContent}>
-      {/* <View style={styles.walletCard}>
-        <View style={styles.walletHeader}>
-          <Text style={styles.walletTitle}>Saldo disponível</Text>
-          <Wallet size={24} color={colors.white} />
-        </View>
-        <Text style={styles.walletBalance}>R$ {walletBalance.toFixed(2)}</Text>
-        <View style={styles.walletActions}>
-          <TouchableOpacity style={styles.walletButton}>
-            <Plus size={20} color={colors.primary} />
-            <Text style={styles.walletButtonText}>Adicionar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.walletButton}>
-            <ArrowUp size={20} color={colors.primary} />
-            <Text style={styles.walletButtonText}>Transferir</Text>
-          </TouchableOpacity>
-        </View>
-      </View> */}
-
       <View style={styles.historyContainer}>
         <View style={styles.historyHeader}>
           <Text style={styles.historyTitle}>Histórico</Text>
@@ -130,17 +124,6 @@ export default function PaymentsScreen() {
           </View>
           <ChevronRight size={20} color={colors.textLight} />
         </TouchableOpacity>
-        
-        {/* <TouchableOpacity style={styles.paymentMethodItem}>
-          <View style={styles.paymentMethodIcon}>
-            <Receipt size={24} color={colors.primary} />
-          </View>
-          <View style={styles.paymentMethodInfo}>
-            <Text style={styles.paymentMethodTitle}>Boleto Bancário</Text>
-            <Text style={styles.paymentMethodSubtitle}>Prazo de 1-3 dias úteis</Text>
-          </View>
-          <ChevronRight size={20} color={colors.textLight} />
-        </TouchableOpacity> */}
       </View>
     </View>
   );
