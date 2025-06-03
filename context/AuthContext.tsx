@@ -42,24 +42,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            userType: profile?.user_type || null,
-            fullName: profile?.full_name,
-            profileComplete: profile?.profile_complete,
-            verified: profile?.verified,
-          });
+          if (profile) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              userType: profile?.user_type || null,
+              fullName: profile?.full_name,
+              profileComplete: profile?.profile_complete,
+              verified: profile?.verified,
+            });
 
-          // Redirecionar baseado no status do perfil
-          if (!profile?.profile_complete) {
-            router.replace(profile?.user_type === 'renter' ? '/auth/renter-profile' : '/auth/owner-profile');
-          } else if (!profile?.verified) {
-            router.replace('/auth/verification-pending');
+            // Redirecionar baseado no status do perfil
+            if (!profile?.profile_complete) {
+              router.replace(profile?.user_type === 'renter' ? '/auth/renter-profile' : '/auth/owner-profile');
+            } else if (!profile?.verified) {
+              router.replace('/auth/verification-pending');
+            } else {
+              router.replace('/(tabs)');
+            }
           } else {
-            router.replace('/(tabs)');
+            setUser(null);
+            router.replace('/');
           }
         } else {
           setUser(null);
@@ -84,16 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          userType: profile?.user_type || null,
-          fullName: profile?.full_name,
-          profileComplete: profile?.profile_complete,
-          verified: profile?.verified,
-        });
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            userType: profile?.user_type || null,
+            fullName: profile?.full_name,
+            profileComplete: profile?.profile_complete,
+            verified: profile?.verified,
+          });
+        }
       }
     } catch (error) {
       console.error('Error checking user:', error);
