@@ -16,7 +16,8 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold 
 } from '@expo-google-fonts/poppins';
-import { ClerkProvider } from '@/context/ClerkProvider'
+import { ClerkProvider } from '@/context/ClerkProvider';
+import { AuthProvider } from '@/context/AuthContext';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 // Prevent splash screen from auto-hiding
@@ -58,19 +59,21 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider>
-      <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ 
-          headerShown: false,
-          contentStyle: { backgroundColor: '#fff' }
-        }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="auth/login" />
-          <Stack.Screen name="auth/register" />
-          <Stack.Screen name="auth/onboarding" />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="dark" />
-      </QueryClientProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <Stack screenOptions={{ 
+            headerShown: false,
+            contentStyle: { backgroundColor: '#fff' }
+          }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="auth/login" />
+            <Stack.Screen name="auth/register" />
+            <Stack.Screen name="auth/onboarding" />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="dark" />
+        </QueryClientProvider>
+      </AuthProvider>
     </ClerkProvider>
   );
 }
