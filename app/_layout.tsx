@@ -16,7 +16,7 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold 
 } from '@expo-google-fonts/poppins';
-import { AuthProvider } from '@/context/AuthContext';
+import { ClerkProvider } from '@/context/ClerkProvider';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -55,8 +55,8 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+    <ClerkProvider>
+      <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ 
           headerShown: false,
           contentStyle: { backgroundColor: '#fff' }
@@ -64,11 +64,11 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="auth/login" />
           <Stack.Screen name="auth/register" />
-          <Stack.Screen name="auth/contract" />
+          <Stack.Screen name="auth/onboarding" />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="dark" />
-      </AuthProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
   );
 }
