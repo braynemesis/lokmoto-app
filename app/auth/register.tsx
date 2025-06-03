@@ -19,7 +19,7 @@ export default function RegisterScreen() {
 
   const handleSignUp = async () => {
     if (!isLoaded) return;
-
+  console.log('asdads')
     try {
       setLoading(true);
       setError('');
