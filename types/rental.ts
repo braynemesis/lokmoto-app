@@ -1,7 +1,10 @@
+import type { Motorcycle } from './motorcycle';
+
 export interface RentalProposal {
   id: string;
   motorcycle_id: string;
   renter_id: string;
+  owner_id: string;
   start_date: string;
   end_date: string;
   total_amount: number;
