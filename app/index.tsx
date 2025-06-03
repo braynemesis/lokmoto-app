@@ -1,16 +1,9 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Link, Redirect, router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/constants/colors';
 
 export default function HomeScreen() {
-  const { user } = useAuth();
-
-  if (user) {
-    return <Redirect href="/(tabs)" />;
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -25,42 +18,51 @@ export default function HomeScreen() {
               style={styles.logo}
             />
             <Text style={styles.title}>LokMoto</Text>
-            <Text style={styles.subtitle}>Alugue motos com facilidade</Text>
+            <Text style={styles.subtitle}>Rent motorcycles easily</Text>
           </View>
         </View>
 
         <View style={styles.authContainer}>
-          <Text style={styles.welcomeText}>Bem-vindo ao LokMoto</Text>
+          <Text style={styles.welcomeText}>Welcome to LokMoto</Text>
           <Text style={styles.descriptionText}>
-            A plataforma que conecta proprietários e locatários de motos de forma segura e prática.
+            The platform that connects motorcycle owners and renters safely and conveniently.
           </Text>
 
-          <View style={styles.authButtons}>
+          <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={styles.primaryButton}
-              onPress={() => router.push('/auth/login')}
+              onPress={() => router.push('/(tabs)')}
             >
-              <Text style={styles.primaryButtonText}>Entrar</Text>
+              <Text style={styles.primaryButtonText}>Browse Motorcycles</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={styles.secondaryButton}
-              onPress={() => router.push('/auth/register')}
-            >
-              <Text style={styles.secondaryButtonText}>Criar uma conta</Text>
-            </TouchableOpacity>
+            <View style={styles.authButtons}>
+              <TouchableOpacity 
+                style={styles.secondaryButton}
+                onPress={() => router.push('/auth/login')}
+              >
+                <Text style={styles.secondaryButtonText}>Sign In</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.secondaryButton}
+                onPress={() => router.push('/auth/register')}
+              >
+                <Text style={styles.secondaryButtonText}>Create Account</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
         <View style={styles.footer}>
           <Link href="/privacy-policy" asChild>
             <TouchableOpacity>
-              <Text style={styles.footerLink}>Política de Privacidade</Text>
+              <Text style={styles.footerLink}>Privacy Policy</Text>
             </TouchableOpacity>
           </Link>
           <Link href="/terms" asChild>
             <TouchableOpacity>
-              <Text style={styles.footerLink}>Termos de Serviço</Text>
+              <Text style={styles.footerLink}>Terms of Service</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -136,8 +138,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 24,
   },
-  authButtons: {
-    gap: 16,
+  buttonContainer: {
+    gap: 24,
   },
   primaryButton: {
     backgroundColor: colors.primary,
@@ -150,7 +152,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.white,
   },
+  authButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   secondaryButton: {
+    flex: 1,
     backgroundColor: colors.white,
     paddingVertical: 16,
     borderRadius: 12,
