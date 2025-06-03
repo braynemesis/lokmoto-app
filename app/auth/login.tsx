@@ -3,34 +3,24 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
-import { useSignIn } from '@clerk/clerk-expo';
 import { colors } from '@/constants/colors';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
-  const { signIn, setActive, isLoaded } = useSignIn();
+  const { signIn } = useAuth();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
 
   const handleSignIn = async () => {
-    if (!isLoaded) return;
-
     try {
       setLoading(true);
       setError('');
-
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      await setActive({ session: result.createdSessionId });
-      router.replace('/(tabs)');
+      await signIn(email, password);
     } catch (err: any) {
-      console.error('Error:', err.errors[0].message);
       setError('Email ou senha inválidos. Por favor, tente novamente.');
     } finally {
       setLoading(false);
@@ -79,7 +69,10 @@ export default function LoginScreen() {
             isPassword
           />
           
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity 
+            style={styles.forgotPassword}
+            onPress={() => router.push('/auth/reset-password')}
+          >
             <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
           </TouchableOpacity>
           

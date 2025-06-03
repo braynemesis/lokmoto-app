@@ -8,23 +8,21 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
 
-export default function RegisterScreen() {
-  const { signUp } = useAuth();
+export default function ResetPasswordScreen() {
+  const { resetPassword } = useAuth();
   const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [firstName, setFirstName] = React.useState('');
-  const [lastName, setLastName] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [success, setSuccess] = React.useState(false);
 
-  const handleSignUp = async () => {
+  const handleResetPassword = async () => {
     try {
       setLoading(true);
       setError('');
-      await signUp(email, password, 'renter', `${firstName} ${lastName}`);
-      router.replace('/auth/onboarding');
+      await resetPassword(email);
+      setSuccess(true);
     } catch (err: any) {
-      setError('Ocorreu um erro ao criar sua conta. Por favor, verifique os dados e tente novamente.');
+      setError('Ocorreu um erro ao enviar o email de recuperação. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -44,8 +42,10 @@ export default function RegisterScreen() {
             source={{ uri: 'https://images.pexels.com/photos/2393821/pexels-photo-2393821.jpeg?auto=compress&cs=tinysrgb&w=1200' }} 
             style={styles.logo}
           />
-          <Text style={styles.title}>Criar Conta</Text>
-          <Text style={styles.subtitle}>Cadastre-se para começar</Text>
+          <Text style={styles.title}>Recuperar Senha</Text>
+          <Text style={styles.subtitle}>
+            Digite seu email para receber as instruções de recuperação de senha
+          </Text>
         </View>
 
         <View style={styles.form}>
@@ -54,54 +54,37 @@ export default function RegisterScreen() {
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
-          
-          <Input
-            label="Nome"
-            placeholder="Digite seu nome"
-            value={firstName}
-            onChangeText={setFirstName}
-          />
-          
-          <Input
-            label="Sobrenome"
-            placeholder="Digite seu sobrenome"
-            value={lastName}
-            onChangeText={setLastName}
-          />
-          
-          <Input
-            label="Email"
-            placeholder="Digite seu email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          
-          <Input
-            label="Senha"
-            placeholder="Crie uma senha"
-            value={password}
-            onChangeText={setPassword}
-            isPassword
-          />
-          
-          <Button
-            title="Cadastrar"
-            onPress={handleSignUp}
-            loading={loading}
-            style={styles.signUpButton}
-          />
-          
-          <Text style={styles.termsText}>
-            Ao se cadastrar, você concorda com nossos Termos de Serviço e Política de Privacidade
-          </Text>
+
+          {success ? (
+            <View style={styles.successContainer}>
+              <Text style={styles.successText}>
+                Email enviado com sucesso! Verifique sua caixa de entrada para recuperar sua senha.
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Input
+                label="Email"
+                placeholder="Digite seu email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              
+              <Button
+                title="Enviar Email"
+                onPress={handleResetPassword}
+                loading={loading}
+                style={styles.resetButton}
+              />
+            </>
+          )}
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Já tem uma conta?</Text>
           <TouchableOpacity onPress={() => router.push('/auth/login')}>
-            <Text style={styles.footerLink}>Entrar</Text>
+            <Text style={styles.footerLink}>Voltar para o login</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -161,27 +144,25 @@ const styles = StyleSheet.create({
     color: colors.danger,
     textAlign: 'center',
   },
-  signUpButton: {
-    marginTop: 10,
+  successContainer: {
+    backgroundColor: `${colors.success}15`,
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 16,
   },
-  termsText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 12,
-    color: colors.textLight,
+  successText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    color: colors.success,
     textAlign: 'center',
   },
+  resetButton: {
+    marginTop: 10,
+  },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 'auto',
     paddingVertical: 20,
-  },
-  footerText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
-    color: colors.textLight,
-    marginRight: 5,
   },
   footerLink: {
     fontFamily: 'Inter-SemiBold',
