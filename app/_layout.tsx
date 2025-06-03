@@ -3,6 +3,7 @@ import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SplashScreen } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { 
   Inter_400Regular,
   Inter_500Medium,
@@ -15,7 +16,7 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold 
 } from '@expo-google-fonts/poppins';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { AuthProvider } from '@/context/AuthContext';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -25,6 +26,9 @@ declare global {
     frameworkReady?: () => void;
   }
 }
+
+// Create a client
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -51,18 +55,20 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ 
-        headerShown: false,
-        contentStyle: { backgroundColor: '#fff' }
-      }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="auth/login" />
-        <Stack.Screen name="auth/register" />
-        <Stack.Screen name="auth/contract" />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="dark" />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Stack screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: '#fff' }
+        }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth/login" />
+          <Stack.Screen name="auth/register" />
+          <Stack.Screen name="auth/contract" />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+        <StatusBar style="dark" />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
