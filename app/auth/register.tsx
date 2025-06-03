@@ -1,76 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Mail, Lock, User, ArrowLeft } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
+import { useSignUp } from '@clerk/clerk-expo';
 import { colors } from '@/constants/colors';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterScreen() {
-  const { signUp, loading } = useAuth();
-  const params = useLocalSearchParams();
-  const [userType, setUserType] = useState<'renter' | 'owner'>('renter');
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-  }>({});
+  const { signUp, setActive, isLoaded } = useSignUp();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [firstName, setFirstName] = React.useState('');
+  const [lastName, setLastName] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
 
-  useEffect(() => {
-    if (params.type === 'owner' || params.type === 'renter') {
-      setUserType(params.type);
-    }
-  }, [params]);
+  const handleSignUp = async () => {
+    if (!isLoaded) return;
 
-  const validate = () => {
-    const newErrors: {
-      fullName?: string;
-      email?: string;
-      password?: string;
-      confirmPassword?: string;
-    } = {};
-    
-    if (!fullName) newErrors.fullName = 'Nome completo é obrigatório';
-    
-    if (!email) newErrors.email = 'Email é obrigatório';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email inválido';
-    
-    if (!password) newErrors.password = 'Senha é obrigatória';
-    else if (password.length < 6) newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
-    
-    if (!confirmPassword) newErrors.confirmPassword = 'Confirme sua senha';
-    else if (password !== confirmPassword) newErrors.confirmPassword = 'As senhas não coincidem';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleRegister = async () => {
-    if (!validate()) return;
-    
     try {
-      await signUp(email, password, userType);
-      
-      // After signup, redirect to the appropriate profile completion page
-      if (userType === 'renter') {
-        router.push('/auth/renter-profile');
-      } else {
-        router.push('/auth/owner-profile');
-      }
-    } catch (error: any) {
-      Alert.alert('Erro ao cadastrar', error.message || 'Ocorreu um erro ao criar sua conta. Tente novamente.');
-    }
-  };
+      setLoading(true);
+      setError('');
 
-  const toggleUserType = () => {
-    setUserType(userType === 'renter' ? 'owner' : 'renter');
+      const result = await signUp.create({
+        emailAddress: email,
+        password,
+        firstName,
+        lastName,
+      });
+
+      await setActive({ session: result.createdSessionId });
+    } catch (err: any) {
+      console.error('Error:', err.errors[0].message);
+      setError(err.errors[0].message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,94 +51,67 @@ export default function RegisterScreen() {
             <ArrowLeft size={24} color={colors.textDark} />
           </TouchableOpacity>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=400&auto=format&fit=crop' }} 
+            source={{ uri: 'https://images.pexels.com/photos/2393821/pexels-photo-2393821.jpeg?auto=compress&cs=tinysrgb&w=1200' }} 
             style={styles.logo}
           />
-          <Text style={styles.title}>Criar uma conta</Text>
-          <Text style={styles.subtitle}>Cadastre-se como {userType === 'renter' ? 'Locatário' : 'Locador'}</Text>
-        </View>
-
-        <View style={styles.userTypeToggle}>
-          <TouchableOpacity
-            style={[
-              styles.userTypeButton,
-              userType === 'renter' && styles.userTypeButtonActive
-            ]}
-            onPress={() => setUserType('renter')}
-          >
-            <Text style={[
-              styles.userTypeText,
-              userType === 'renter' && styles.userTypeTextActive
-            ]}>Locatário</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.userTypeButton,
-              userType === 'owner' && styles.userTypeButtonActive
-            ]}
-            onPress={() => setUserType('owner')}
-          >
-            <Text style={[
-              styles.userTypeText,
-              userType === 'owner' && styles.userTypeTextActive
-            ]}>Locador</Text>
-          </TouchableOpacity>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
         </View>
 
         <View style={styles.form}>
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+          
           <Input
-            label="Nome Completo"
-            placeholder="Seu nome completo"
-            value={fullName}
-            onChangeText={setFullName}
-            error={errors.fullName}
-            leftIcon={<User size={20} color={colors.textLight} />}
+            label="First Name"
+            placeholder="Enter your first name"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+          
+          <Input
+            label="Last Name"
+            placeholder="Enter your last name"
+            value={lastName}
+            onChangeText={setLastName}
           />
           
           <Input
             label="Email"
-            placeholder="Seu email"
-            keyboardType="email-address"
-            autoCapitalize="none"
+            placeholder="Enter your email"
             value={email}
             onChangeText={setEmail}
-            error={errors.email}
-            leftIcon={<Mail size={20} color={colors.textLight} />}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
           
           <Input
-            label="Senha"
-            placeholder="Sua senha"
+            label="Password"
+            placeholder="Create a password"
             value={password}
             onChangeText={setPassword}
-            error={errors.password}
-            leftIcon={<Lock size={20} color={colors.textLight} />}
-            isPassword
-          />
-          
-          <Input
-            label="Confirmar Senha"
-            placeholder="Confirme sua senha"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            error={errors.confirmPassword}
-            leftIcon={<Lock size={20} color={colors.textLight} />}
             isPassword
           />
           
           <Button
-            title="Cadastrar"
-            onPress={handleRegister}
+            title="Sign Up"
+            onPress={handleSignUp}
             loading={loading}
-            style={styles.registerButton}
+            style={styles.signUpButton}
           />
+          
+          <Text style={styles.termsText}>
+            By signing up, you agree to our Terms of Service and Privacy Policy
+          </Text>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Já tem uma conta?</Text>
+          <Text style={styles.footerText}>Already have an account?</Text>
           <TouchableOpacity onPress={() => router.push('/auth/login')}>
-            <Text style={styles.footerLink}>Entrar</Text>
+            <Text style={styles.footerLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -190,7 +130,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 40,
   },
   backButton: {
     position: 'absolute',
@@ -199,10 +139,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 16,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 20,
   },
   title: {
     fontFamily: 'Poppins-Bold',
@@ -216,40 +156,30 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
   },
-  userTypeToggle: {
-    flexDirection: 'row',
-    marginBottom: 24,
-    backgroundColor: colors.inputBg,
+  form: {
+    marginBottom: 30,
+  },
+  errorContainer: {
+    backgroundColor: `${colors.danger}15`,
+    padding: 12,
     borderRadius: 8,
-    padding: 4,
+    marginBottom: 16,
   },
-  userTypeButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  userTypeButtonActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.textDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  userTypeText: {
+  errorText: {
     fontFamily: 'Inter-Medium',
     fontSize: 14,
-    color: colors.textLight,
+    color: colors.danger,
+    textAlign: 'center',
   },
-  userTypeTextActive: {
-    color: colors.primary,
-  },
-  form: {
-    marginBottom: 20,
-  },
-  registerButton: {
+  signUpButton: {
     marginTop: 10,
+    marginBottom: 16,
+  },
+  termsText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

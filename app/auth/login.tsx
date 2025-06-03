@@ -1,40 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Mail, Lock, ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
+import { useSignIn } from '@clerk/clerk-expo';
 import { colors } from '@/constants/colors';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
-  const { signIn, loading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{email?: string; password?: string}>({});
+  const { signIn, setActive, isLoaded } = useSignIn();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
 
-  const validate = () => {
-    const newErrors: {email?: string; password?: string} = {};
-    
-    if (!email) newErrors.email = 'Email é obrigatório';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email inválido';
-    
-    if (!password) newErrors.password = 'Senha é obrigatória';
-    else if (password.length < 6) newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const handleSignIn = async () => {
+    if (!isLoaded) return;
 
-  const handleLogin = async () => {
-    if (!validate()) return;
-    
     try {
-      await signIn(email, password);
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Erro ao entrar', error.message || 'Verifique suas credenciais e tente novamente.');
+      setLoading(true);
+      setError('');
+
+      const result = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      await setActive({ session: result.createdSessionId });
+    } catch (err: any) {
+      console.error('Error:', err.errors[0].message);
+      setError(err.errors[0].message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,51 +47,53 @@ export default function LoginScreen() {
             <ArrowLeft size={24} color={colors.textDark} />
           </TouchableOpacity>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=400&auto=format&fit=crop' }} 
+            source={{ uri: 'https://images.pexels.com/photos/2393821/pexels-photo-2393821.jpeg?auto=compress&cs=tinysrgb&w=1200' }} 
             style={styles.logo}
           />
-          <Text style={styles.title}>Bem-vindo de volta</Text>
-          <Text style={styles.subtitle}>Entre com sua conta para continuar</Text>
+          <Text style={styles.title}>Welcome back</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
         </View>
 
         <View style={styles.form}>
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+          
           <Input
             label="Email"
-            placeholder="Seu email"
-            keyboardType="email-address"
-            autoCapitalize="none"
+            placeholder="Enter your email"
             value={email}
             onChangeText={setEmail}
-            error={errors.email}
-            leftIcon={<Mail size={20} color={colors.textLight} />}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
           
           <Input
-            label="Senha"
-            placeholder="Sua senha"
+            label="Password"
+            placeholder="Enter your password"
             value={password}
             onChangeText={setPassword}
-            error={errors.password}
-            leftIcon={<Lock size={20} color={colors.textLight} />}
             isPassword
           />
           
           <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
+            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
           
           <Button
-            title="Entrar"
-            onPress={handleLogin}
+            title="Sign In"
+            onPress={handleSignIn}
             loading={loading}
-            style={styles.loginButton}
+            style={styles.signInButton}
           />
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Não tem uma conta?</Text>
+          <Text style={styles.footerText}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => router.push('/auth/register')}>
-            <Text style={styles.footerLink}>Cadastre-se</Text>
+            <Text style={styles.footerLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -141,6 +141,18 @@ const styles = StyleSheet.create({
   form: {
     marginBottom: 30,
   },
+  errorContainer: {
+    backgroundColor: `${colors.danger}15`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
+    color: colors.danger,
+    textAlign: 'center',
+  },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginBottom: 20,
@@ -150,7 +162,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
   },
-  loginButton: {
+  signInButton: {
     marginTop: 10,
   },
   footer: {

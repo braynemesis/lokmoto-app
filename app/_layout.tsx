@@ -16,7 +16,8 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold 
 } from '@expo-google-fonts/poppins';
-import { ClerkProvider } from '@/context/ClerkProvider';
+import { ClerkProvider } from '@/context/ClerkProvider'
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -31,6 +32,7 @@ declare global {
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
+  useFrameworkReady();
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
