@@ -58,9 +58,9 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider>
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ClerkProvider>
+        <AuthProvider>
           <Stack screenOptions={{ 
             headerShown: false,
             contentStyle: { backgroundColor: '#fff' }
@@ -72,8 +72,8 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="dark" />
-        </QueryClientProvider>
-      </AuthProvider>
-    </ClerkProvider>
+        </AuthProvider>
+      </ClerkProvider>
+    </QueryClientProvider>
   );
 }
