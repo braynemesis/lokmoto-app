@@ -1,109 +1,64 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Search, Filter, MapPin, Star, ChevronDown } from 'lucide-react-native';
+import { Search, Filter, MapPin, Heart, ChevronDown } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import Input from '@/components/Input';
-
-const MOTORCYCLE_DATA = [
-  {
-    id: '1',
-    name: 'Honda CB 500F',
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?q=80&w=300&auto=format&fit=crop',
-    price: 120,
-    rating: 4.8,
-    location: 'São Paulo, SP',
-    category: 'Esportiva',
-  },
-  {
-    id: '2',
-    name: 'Yamaha MT-07',
-    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=300&auto=format&fit=crop',
-    price: 150,
-    rating: 4.9,
-    location: 'Rio de Janeiro, RJ',
-    category: 'Naked',
-  },
-  {
-    id: '3',
-    name: 'Kawasaki Z900',
-    image: 'https://images.unsplash.com/photo-1580310614729-ccd69652491d?q=80&w=300&auto=format&fit=crop',
-    price: 180,
-    rating: 4.7,
-    location: 'Belo Horizonte, MG',
-    category: 'Naked',
-  },
-  {
-    id: '4',
-    name: 'BMW G 310 R',
-    image: 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?q=80&w=300&auto=format&fit=crop',
-    price: 200,
-    rating: 4.6,
-    location: 'Curitiba, PR',
-    category: 'Roadster',
-  },
-  {
-    id: '5',
-    name: 'Ducati Monster',
-    image: 'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?q=80&w=300&auto=format&fit=crop',
-    price: 250,
-    rating: 4.9,
-    location: 'São Paulo, SP',
-    category: 'Naked',
-  },
-  {
-    id: '6',
-    name: 'Harley-Davidson Iron 883',
-    image: 'https://images.unsplash.com/photo-1604357209793-fca5dca89f97?q=80&w=300&auto=format&fit=crop',
-    price: 220,
-    rating: 4.5,
-    location: 'Rio de Janeiro, RJ',
-    category: 'Custom',
-  },
-];
+import { useMotorcycles } from '@/hooks/useMotorcycles';
+import type { MotorcycleFilters } from '@/types/motorcycle';
 
 const FILTERS = [
   { id: 'category', name: 'Categoria' },
   { id: 'price', name: 'Preço' },
-  { id: 'rating', name: 'Avaliação' },
   { id: 'location', name: 'Localização' },
 ];
 
 export default function MotorcyclesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [motorcycles, setMotorcycles] = useState(MOTORCYCLE_DATA);
+  const [filters, setFilters] = useState<MotorcycleFilters>({});
   const [activeFilter, setActiveFilter] = useState('');
   const [sortBy, setSortBy] = useState('recommended');
+
+  const { data: motorcycles, isLoading, error } = useMotorcycles(filters);
 
   const renderMotorcycleItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.motorcycleItem}
       onPress={() => router.push(`/motorcycle/${item.id}`)}
     >
-      <Image source={{ uri: item.image }} style={styles.motorcycleImage} />
+      <Image source={{ uri: item.image_urls[0] }} style={styles.motorcycleImage} />
       <View style={styles.motorcycleContent}>
         <View style={styles.motorcycleHeader}>
-          <Text style={styles.motorcycleName}>{item.name}</Text>
-          <View style={styles.ratingContainer}>
-            <Star size={14} color={colors.secondary} fill={colors.secondary} />
-            <Text style={styles.ratingText}>{item.rating}</Text>
-          </View>
+          <Text style={styles.motorcycleName}>{item.brand} {item.model}</Text>
+          <TouchableOpacity>
+            <Heart size={20} color={colors.textLight} />
+          </TouchableOpacity>
         </View>
         
         <Text style={styles.motorcycleCategory}>{item.category}</Text>
         
         <View style={styles.locationRow}>
           <MapPin size={14} color={colors.textLight} />
-          <Text style={styles.motorcycleLocation}>{item.location}</Text>
+          <Text style={styles.motorcycleLocation}>{item.location || 'São Paulo, SP'}</Text>
         </View>
         
         <View style={styles.priceRow}>
           <Text style={styles.priceLabel}>Diária</Text>
-          <Text style={styles.priceValue}>R$ {item.price}</Text>
+          <Text style={styles.priceValue}>R$ {item.daily_rate}</Text>
         </View>
       </View>
     </TouchableOpacity>
+  );
+
+  const renderEmptyList = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>
+        {error 
+          ? 'Erro ao carregar as motos. Tente novamente.'
+          : 'Nenhuma moto encontrada.'}
+      </Text>
+    </View>
   );
 
   return (
@@ -152,21 +107,26 @@ export default function MotorcyclesScreen() {
             <Text style={styles.sortButtonText}>
               {sortBy === 'recommended' ? 'Recomendados' : 
                sortBy === 'price_asc' ? 'Menor preço' : 
-               sortBy === 'price_desc' ? 'Maior preço' : 
-               sortBy === 'rating' ? 'Melhor avaliação' : 'Recomendados'}
+               sortBy === 'price_desc' ? 'Maior preço' : 'Recomendados'}
             </Text>
             <ChevronDown size={16} color={colors.textDark} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <FlatList
-        data={motorcycles}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMotorcycleItem}
-        contentContainerStyle={styles.motorcycleList}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={motorcycles}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMotorcycleItem}
+          contentContainerStyle={styles.motorcycleList}
+          ListEmptyComponent={renderEmptyList}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -241,6 +201,11 @@ const styles = StyleSheet.create({
     color: colors.textDark,
     marginRight: 4,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   motorcycleList: {
     padding: 20,
   },
@@ -278,16 +243,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingText: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 12,
-    color: colors.textDark,
-    marginLeft: 4,
-  },
   motorcycleCategory: {
     fontFamily: 'Inter-Regular',
     fontSize: 14,
@@ -319,5 +274,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
     fontSize: 16,
     color: colors.primary,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
   },
 });
