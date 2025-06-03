@@ -10,7 +10,7 @@ export function useMotorcycles(filters?: MotorcycleFilters) {
         .from('motorcycles')
         .select(`
           *,
-          owner:profiles(id, full_name, verified)
+          owner:profiles(id, full_name)
         `)
         .eq('status', 'available');
 
@@ -51,8 +51,7 @@ export function useMotorcycle(id: string) {
           *,
           owner:profiles(
             id, 
-            full_name,
-            verified
+            full_name
           )
         `)
         .eq('id', id)
@@ -69,13 +68,11 @@ export function useNearbyMotorcycles(latitude: number, longitude: number, radius
   return useQuery({
     queryKey: ['motorcycles', 'nearby', latitude, longitude, radius],
     queryFn: async () => {
-      // In a real app, we would use PostGIS for this
-      // For now, we'll just return all available motorcycles
       const { data, error } = await supabase
         .from('motorcycles')
         .select(`
           *,
-          owner:profiles(id, full_name, verified)
+          owner:profiles(id, full_name)
         `)
         .eq('status', 'available')
         .limit(5);
@@ -95,7 +92,7 @@ export function useFeaturedMotorcycles() {
         .from('motorcycles')
         .select(`
           *,
-          owner:profiles(id, full_name, verified)
+          owner:profiles(id, full_name)
         `)
         .eq('status', 'available')
         .limit(5);
