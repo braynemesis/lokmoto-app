@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   Alert,
   ActivityIndicator,
-  Modal
+  Modal,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -28,119 +29,15 @@ import {
 import { colors } from '@/constants/colors';
 import Button from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
 import Calendar from '@/components/Calendar';
 import RentalProposalForm from '@/components/RentalProposalForm';
-
-// Mock data for motorcycle details
-const MOTORCYCLE_DATA = {
-  '1': {
-    id: '1',
-    name: 'Honda CB 500F',
-    images: [
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1558980394-4c7c9299fe96?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=800&auto=format&fit=crop'
-    ],
-    price: 120,
-    rating: 4.8,
-    location: 'São Paulo, SP',
-    category: 'Esportiva',
-    year: 2022,
-    engine: '471cc',
-    power: '47 hp',
-    mileage: '12.000 km',
-    features: ['ABS', 'Injeção Eletrônica', 'Painel Digital', 'Partida Elétrica'],
-    description: 'A Honda CB 500F é uma naked de média cilindrada que combina estilo, desempenho e economia. Com seu motor bicilíndrico de 471cc, oferece potência suficiente para o dia a dia e para viagens, sem comprometer o consumo de combustível. Seu design moderno e agressivo chama a atenção por onde passa.',
-    owner: {
-      name: 'Carlos Oliveira',
-      rating: 4.9,
-      responseTime: '1 hora',
-      verified: true
-    }
-  },
-  '2': {
-    id: '2',
-    name: 'Yamaha MT-07',
-    images: [
-      'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1558980394-dbb977039a2e?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1558981359-219d6364c9c8?q=80&w=800&auto=format&fit=crop'
-    ],
-    price: 150,
-    rating: 4.9,
-    location: 'Rio de Janeiro, RJ',
-    category: 'Naked',
-    year: 2023,
-    engine: '689cc',
-    power: '74 hp',
-    mileage: '5.000 km',
-    features: ['ABS', 'Injeção Eletrônica', 'Painel Digital', 'Partida Elétrica', 'Controle de Tração'],
-    description: 'A Yamaha MT-07 é uma naked de média cilindrada que se destaca pelo seu motor bicilíndrico CP2 de 689cc, que entrega torque em baixas e médias rotações. Com design agressivo e minimalista, é uma moto versátil, ideal tanto para o uso urbano quanto para viagens de fim de semana.',
-    owner: {
-      name: 'Mariana Costa',
-      rating: 4.8,
-      responseTime: '30 minutos',
-      verified: true
-    }
-  },
-  '3': {
-    id: '3',
-    name: 'Kawasaki Z900',
-    images: [
-      'https://images.unsplash.com/photo-1580310614729-ccd69652491d?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1580310614729-ccd69652491d?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1580310614729-ccd69652491d?q=80&w=800&auto=format&fit=crop'
-    ],
-    price: 180,
-    rating: 4.7,
-    location: 'Belo Horizonte, MG',
-    category: 'Naked',
-    year: 2022,
-    engine: '948cc',
-    power: '125 hp',
-    mileage: '8.000 km',
-    features: ['ABS', 'Injeção Eletrônica', 'Painel Digital', 'Partida Elétrica', 'Controle de Tração', 'Modos de Pilotagem'],
-    description: 'A Kawasaki Z900 é uma naked esportiva com motor de 948cc que entrega 125 cavalos de potência. Com seu design agressivo e linhas afiadas, a Z900 é uma moto que não passa despercebida. Seu motor de quatro cilindros oferece performance excepcional, enquanto o chassi leve e ágil proporciona uma pilotagem precisa e divertida.',
-    owner: {
-      name: 'Roberto Almeida',
-      rating: 4.7,
-      responseTime: '2 horas',
-      verified: true
-    }
-  },
-  '4': {
-    id: '4',
-    name: 'BMW G 310 R',
-    images: [
-      'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?q=80&w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?q=80&w=800&auto=format&fit=crop'
-    ],
-    price: 200,
-    rating: 4.6,
-    location: 'Curitiba, PR',
-    category: 'Roadster',
-    year: 2023,
-    engine: '313cc',
-    power: '34 hp',
-    mileage: '3.000 km',
-    features: ['ABS', 'Injeção Eletrônica', 'Painel Digital', 'Partida Elétrica'],
-    description: 'A BMW G 310 R é uma roadster compacta e ágil, ideal para o uso urbano. Com seu motor monocilíndrico de 313cc, oferece uma combinação perfeita de economia e desempenho. Seu design moderno e a qualidade de acabamento BMW fazem dela uma excelente opção para quem busca uma moto premium de baixa cilindrada.',
-    owner: {
-      name: 'Fernanda Lima',
-      rating: 4.9,
-      responseTime: '15 minutos',
-      verified: true
-    }
-  }
-};
+import { useMotorcycle } from '@/hooks/useMotorcycles';
+import { useCreateRentalProposal } from '@/hooks/useRentals';
+import MotorcycleSkeleton from '@/components/MotorcycleSkeleton';
 
 export default function MotorcycleDetailsScreen() {
   const { id } = useLocalSearchParams();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [motorcycle, setMotorcycle] = useState<any>(null);
+  const { user, isAuthenticated } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -149,22 +46,21 @@ export default function MotorcycleDetailsScreen() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showProposalForm, setShowProposalForm] = useState(false);
-  const [proposalSent, setProposalSent] = useState(false);
 
-  useEffect(() => {
-    // In a real app, fetch motorcycle data from Supabase
-    // For now, use mock data
-    if (id && typeof id === 'string') {
-      setMotorcycle(MOTORCYCLE_DATA[id]);
-    }
-  }, [id]);
+  const { 
+    data: motorcycle,
+    isLoading,
+    error
+  } = useMotorcycle(typeof id === 'string' ? id : '');
 
-  useEffect(() => {
-    if (startDate && endDate) {
+  const createProposal = useCreateRentalProposal();
+
+  React.useEffect(() => {
+    if (startDate && endDate && motorcycle) {
       const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       setTotalDays(diffDays);
-      setTotalPrice(diffDays * (motorcycle?.price || 0));
+      setTotalPrice(diffDays * motorcycle.daily_rate);
     } else {
       setTotalDays(0);
       setTotalPrice(0);
@@ -172,7 +68,7 @@ export default function MotorcycleDetailsScreen() {
   }, [startDate, endDate, motorcycle]);
 
   const handleNextImage = () => {
-    if (motorcycle && currentImageIndex < motorcycle.images.length - 1) {
+    if (motorcycle && currentImageIndex < motorcycle.image_urls.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
     }
   };
@@ -198,8 +94,8 @@ export default function MotorcycleDetailsScreen() {
     }
   };
 
-  const handleSendProposal = async () => {
-    if (!user) {
+  const handleSendProposal = () => {
+    if (!isAuthenticated) {
       Alert.alert(
         'Autenticação Necessária',
         'Você precisa estar logado para enviar uma proposta.',
@@ -216,35 +112,34 @@ export default function MotorcycleDetailsScreen() {
       return;
     }
 
+    // Verificar período mínimo de 30 dias
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 30) {
+      Alert.alert('Período Mínimo', 'O período mínimo de locação é de 30 dias.');
+      return;
+    }
+
     setShowProposalForm(true);
   };
 
   const handleSubmitProposal = async (purpose: string, additionalInfo: string) => {
-    setLoading(true);
-
     try {
-      // In a real app, create a rental proposal in Supabase
-      // For now, just simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!motorcycle || !user || !startDate || !endDate) return;
 
-      // Create a mock proposal
-      const proposal = {
-        id: Math.random().toString(36).substring(7),
-        motorcycle_id: motorcycle?.id,
-        renter_id: user?.id,
-        start_date: startDate,
-        end_date: endDate,
-        total_amount: totalPrice + Math.round(totalPrice * 0.1),
-        status: 'pending',
+      await createProposal.mutateAsync({
+        motorcycle_id: motorcycle.id,
+        renter_id: user.id,
+        owner_id: motorcycle.owner_id,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        total_amount: totalPrice,
         purpose,
         additional_info: additionalInfo,
-        created_at: new Date()
-      };
+        status: 'pending'
+      });
 
-      // In a real app, save this to Supabase
-      console.log('Proposal created:', proposal);
-
-      setProposalSent(true);
       setShowProposalForm(false);
 
       Alert.alert(
@@ -257,15 +152,26 @@ export default function MotorcycleDetailsScreen() {
     } catch (error) {
       console.error('Error sending proposal:', error);
       Alert.alert('Erro', 'Ocorreu um erro ao enviar sua proposta. Tente novamente.');
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (!motorcycle) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <MotorcycleSkeleton />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !motorcycle) {
+    return (
+      <SafeAreaView style={styles.errorContainer}>
+        <Text style={styles.errorText}>Não foi possível carregar os detalhes da moto.</Text>
+        <Button
+          title="Voltar"
+          onPress={() => router.back()}
+          style={styles.backButtonError}
+        />
       </SafeAreaView>
     );
   }
@@ -294,11 +200,11 @@ export default function MotorcycleDetailsScreen() {
 
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: motorcycle.images[currentImageIndex] }} 
+            source={{ uri: motorcycle.image_urls[currentImageIndex] }} 
             style={styles.motorcycleImage}
           />
           
-          {motorcycle.images.length > 1 && (
+          {motorcycle.image_urls.length > 1 && (
             <>
               <TouchableOpacity 
                 style={[styles.imageNavButton, styles.prevButton]}
@@ -311,13 +217,13 @@ export default function MotorcycleDetailsScreen() {
               <TouchableOpacity 
                 style={[styles.imageNavButton, styles.nextButton]}
                 onPress={handleNextImage}
-                disabled={currentImageIndex === motorcycle.images.length - 1}
+                disabled={currentImageIndex === motorcycle.image_urls.length - 1}
               >
                 <ChevronRight size={24} color={colors.white} />
               </TouchableOpacity>
               
               <View style={styles.imagePagination}>
-                {motorcycle.images.map((_, index) => (
+                {motorcycle.image_urls.map((_, index) => (
                   <View 
                     key={index} 
                     style={[
@@ -333,11 +239,13 @@ export default function MotorcycleDetailsScreen() {
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
-            <Text style={styles.motorcycleName}>{motorcycle.name}</Text>
-            <View style={styles.ratingContainer}>
-              <Star size={16} color={colors.secondary} fill={colors.secondary} />
-              <Text style={styles.ratingText}>{motorcycle.rating}</Text>
-            </View>
+            <Text style={styles.motorcycleName}>{motorcycle.brand} {motorcycle.model}</Text>
+            {motorcycle.owner?.rating && (
+              <View style={styles.ratingContainer}>
+                <Star size={16} color={colors.secondary} fill={colors.secondary} />
+                <Text style={styles.ratingText}>{motorcycle.owner.rating}</Text>
+              </View>
+            )}
           </View>
           
           <View style={styles.locationContainer}>
@@ -347,7 +255,7 @@ export default function MotorcycleDetailsScreen() {
           
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>Diária</Text>
-            <Text style={styles.priceValue}>R$ {motorcycle.price}</Text>
+            <Text style={styles.priceValue}>R$ {motorcycle.daily_rate}</Text>
           </View>
           
           <View style={styles.divider} />
@@ -385,21 +293,6 @@ export default function MotorcycleDetailsScreen() {
           
           <View style={styles.divider} />
           
-          <View style={styles.featuresContainer}>
-            <Text style={styles.sectionTitle}>Características</Text>
-            
-            <View style={styles.featuresList}>
-              {motorcycle.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <View style={styles.featureDot} />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-          
-          <View style={styles.divider} />
-          
           <View style={styles.descriptionContainer}>
             <Text style={styles.sectionTitle}>Descrição</Text>
             <Text style={styles.descriptionText}>{motorcycle.description}</Text>
@@ -413,24 +306,34 @@ export default function MotorcycleDetailsScreen() {
             <View style={styles.ownerInfo}>
               <View style={styles.ownerProfile}>
                 <View style={styles.ownerAvatar}>
-                  <Text style={styles.ownerInitials}>{motorcycle.owner.name.charAt(0)}</Text>
+                  <Text style={styles.ownerInitials}>
+                    {motorcycle.owner?.full_name?.charAt(0) || 'L'}
+                  </Text>
                 </View>
                 <View style={styles.ownerDetails}>
-                  <Text style={styles.ownerName}>{motorcycle.owner.name}</Text>
-                  <View style={styles.ownerRating}>
-                    <Star size={14} color={colors.secondary} fill={colors.secondary} />
-                    <Text style={styles.ownerRatingText}>{motorcycle.owner.rating}</Text>
-                  </View>
+                  <Text style={styles.ownerName}>
+                    {motorcycle.owner?.company_name || motorcycle.owner?.full_name}
+                  </Text>
+                  {motorcycle.owner?.rating && (
+                    <View style={styles.ownerRating}>
+                      <Star size={14} color={colors.secondary} fill={colors.secondary} />
+                      <Text style={styles.ownerRatingText}>{motorcycle.owner.rating}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
               
               <View style={styles.ownerStats}>
-                <View style={styles.ownerStatItem}>
-                  <Clock size={16} color={colors.textLight} />
-                  <Text style={styles.ownerStatText}>Responde em {motorcycle.owner.responseTime}</Text>
-                </View>
+                {motorcycle.owner?.response_time && (
+                  <View style={styles.ownerStatItem}>
+                    <Clock size={16} color={colors.textLight} />
+                    <Text style={styles.ownerStatText}>
+                      Responde em {motorcycle.owner.response_time}
+                    </Text>
+                  </View>
+                )}
                 
-                {motorcycle.owner.verified && (
+                {motorcycle.owner?.verified && (
                   <View style={styles.ownerStatItem}>
                     <Shield size={16} color={colors.success} />
                     <Text style={styles.ownerStatText}>Verificado</Text>
@@ -465,6 +368,7 @@ export default function MotorcycleDetailsScreen() {
                 onSelectDate={handleDateSelect}
                 startDate={startDate}
                 endDate={endDate}
+                minDate={new Date()}
               />
             )}
             
@@ -472,33 +376,39 @@ export default function MotorcycleDetailsScreen() {
               <View style={styles.rentalSummary}>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Período</Text>
-                  <Text style={styles.summaryValue}>{totalDays} {totalDays === 1 ? 'dia' : 'dias'}</Text>
+                  <Text style={styles.summaryValue}>
+                    {totalDays} {totalDays === 1 ? 'dia' : 'dias'}
+                  </Text>
                 </View>
                 
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Valor da diária</Text>
-                  <Text style={styles.summaryValue}>R$ {motorcycle.price}</Text>
+                  <Text style={styles.summaryValue}>R$ {motorcycle.daily_rate}</Text>
                 </View>
                 
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Taxa de serviço</Text>
-                  <Text style={styles.summaryValue}>R$ {Math.round(totalPrice * 0.1)}</Text>
+                  <Text style={styles.summaryValue}>
+                    R$ {Math.round(totalPrice * 0.1)}
+                  </Text>
                 </View>
                 
                 <View style={styles.summaryTotal}>
                   <Text style={styles.summaryTotalLabel}>Total</Text>
-                  <Text style={styles.summaryTotalValue}>R$ {totalPrice + Math.round(totalPrice * 0.1)}</Text>
+                  <Text style={styles.summaryTotalValue}>
+                    R$ {totalPrice + Math.round(totalPrice * 0.1)}
+                  </Text>
                 </View>
               </View>
             )}
             
             <Button
-              title={loading ? "Processando..." : proposalSent ? "Proposta Enviada" : "Enviar Proposta"}
+              title={createProposal.isPending ? "Processando..." : "Enviar Proposta"}
               onPress={handleSendProposal}
-              loading={loading}
-              disabled={!startDate || !endDate || loading || proposalSent}
+              loading={createProposal.isPending}
+              disabled={!startDate || !endDate || createProposal.isPending}
               style={styles.rentButton}
-              icon={proposalSent ? <Send size={20} color={colors.white} /> : undefined}
+              icon={<Send size={20} color={colors.white} />}
             />
             
             <View style={styles.infoContainer}>
@@ -524,7 +434,7 @@ export default function MotorcycleDetailsScreen() {
           totalPrice={totalPrice + Math.round(totalPrice * 0.1)}
           onClose={() => setShowProposalForm(false)}
           onSubmit={handleSubmitProposal}
-          loading={loading}
+          loading={createProposal.isPending}
         />
       </Modal>
     </SafeAreaView>
@@ -538,16 +448,32 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 20,
     backgroundColor: colors.background,
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: colors.background,
+  },
+  errorText: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    color: colors.textDark,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  backButtonError: {
+    width: 200,
+  },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 40,
   },
   header: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'ios' ? 60 : 20,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -705,31 +631,6 @@ const styles = StyleSheet.create({
   specificationValue: {
     fontFamily: 'Inter-SemiBold',
     fontSize: 16,
-    color: colors.textDark,
-  },
-  featuresContainer: {
-    marginBottom: 20,
-  },
-  featuresList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '50%',
-    marginBottom: 12,
-  },
-  featureDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-    marginRight: 8,
-  },
-  featureText: {
-    fontFamily: 'Inter-Regular',
-    fontSize: 14,
     color: colors.textDark,
   },
   descriptionContainer: {
