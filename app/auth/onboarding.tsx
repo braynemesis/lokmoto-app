@@ -17,7 +17,6 @@ export default function OnboardingScreen() {
     try {
       setLoading(true);
       
-      // Update user metadata with phone and type
       await user?.update({
         unsafeMetadata: {
           userType,
@@ -25,10 +24,9 @@ export default function OnboardingScreen() {
         },
       });
 
-      // Navigate to the appropriate profile completion screen
       router.replace(userType === 'renter' ? '/auth/renter-profile' : '/auth/owner-profile');
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      console.error('Erro ao completar perfil:', error);
     } finally {
       setLoading(false);
     }
@@ -37,21 +35,21 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Complete Your Profile</Text>
-        <Text style={styles.subtitle}>Tell us a bit more about yourself</Text>
+        <Text style={styles.title}>Complete seu Perfil</Text>
+        <Text style={styles.subtitle}>Conte-nos um pouco mais sobre você</Text>
 
         <View style={styles.form}>
           <View style={styles.userTypeContainer}>
-            <Text style={styles.label}>I want to:</Text>
+            <Text style={styles.label}>Eu quero:</Text>
             <View style={styles.userTypeButtons}>
               <Button
-                title="Rent Motorcycles"
+                title="Alugar Motos"
                 onPress={() => setUserType('renter')}
                 variant={userType === 'renter' ? 'primary' : 'outline'}
                 style={[styles.userTypeButton, styles.userTypeButtonLeft]}
               />
               <Button
-                title="List My Motorcycles"
+                title="Anunciar Motos"
                 onPress={() => setUserType('owner')}
                 variant={userType === 'owner' ? 'primary' : 'outline'}
                 style={[styles.userTypeButton, styles.userTypeButtonRight]}
@@ -60,15 +58,15 @@ export default function OnboardingScreen() {
           </View>
 
           <Input
-            label="Phone Number"
-            placeholder="Enter your phone number"
+            label="Telefone"
+            placeholder="Digite seu número de telefone"
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
           />
 
           <Button
-            title="Continue"
+            title="Continuar"
             onPress={handleComplete}
             loading={loading}
             style={styles.continueButton}

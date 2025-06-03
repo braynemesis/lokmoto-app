@@ -28,9 +28,10 @@ export default function LoginScreen() {
       });
 
       await setActive({ session: result.createdSessionId });
+      router.replace('/(tabs)');
     } catch (err: any) {
       console.error('Error:', err.errors[0].message);
-      setError(err.errors[0].message);
+      setError('Email ou senha inválidos. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -50,8 +51,8 @@ export default function LoginScreen() {
             source={{ uri: 'https://images.pexels.com/photos/2393821/pexels-photo-2393821.jpeg?auto=compress&cs=tinysrgb&w=1200' }} 
             style={styles.logo}
           />
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.title}>Bem-vindo de volta</Text>
+          <Text style={styles.subtitle}>Entre para continuar</Text>
         </View>
 
         <View style={styles.form}>
@@ -63,7 +64,7 @@ export default function LoginScreen() {
           
           <Input
             label="Email"
-            placeholder="Enter your email"
+            placeholder="Digite seu email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -71,19 +72,19 @@ export default function LoginScreen() {
           />
           
           <Input
-            label="Password"
-            placeholder="Enter your password"
+            label="Senha"
+            placeholder="Digite sua senha"
             value={password}
             onChangeText={setPassword}
             isPassword
           />
           
           <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
           </TouchableOpacity>
           
           <Button
-            title="Sign In"
+            title="Entrar"
             onPress={handleSignIn}
             loading={loading}
             style={styles.signInButton}
@@ -91,9 +92,9 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
+          <Text style={styles.footerText}>Não tem uma conta?</Text>
           <TouchableOpacity onPress={() => router.push('/auth/register')}>
-            <Text style={styles.footerLink}>Sign Up</Text>
+            <Text style={styles.footerLink}>Cadastre-se</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

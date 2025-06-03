@@ -32,9 +32,10 @@ export default function RegisterScreen() {
       });
 
       await setActive({ session: result.createdSessionId });
+      router.replace('/auth/onboarding');
     } catch (err: any) {
       console.error('Error:', err.errors[0].message);
-      setError(err.errors[0].message);
+      setError('Ocorreu um erro ao criar sua conta. Por favor, verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -54,8 +55,8 @@ export default function RegisterScreen() {
             source={{ uri: 'https://images.pexels.com/photos/2393821/pexels-photo-2393821.jpeg?auto=compress&cs=tinysrgb&w=1200' }} 
             style={styles.logo}
           />
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Sign up to get started</Text>
+          <Text style={styles.title}>Criar Conta</Text>
+          <Text style={styles.subtitle}>Cadastre-se para começar</Text>
         </View>
 
         <View style={styles.form}>
@@ -66,22 +67,22 @@ export default function RegisterScreen() {
           ) : null}
           
           <Input
-            label="First Name"
-            placeholder="Enter your first name"
+            label="Nome"
+            placeholder="Digite seu nome"
             value={firstName}
             onChangeText={setFirstName}
           />
           
           <Input
-            label="Last Name"
-            placeholder="Enter your last name"
+            label="Sobrenome"
+            placeholder="Digite seu sobrenome"
             value={lastName}
             onChangeText={setLastName}
           />
           
           <Input
             label="Email"
-            placeholder="Enter your email"
+            placeholder="Digite seu email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -89,29 +90,29 @@ export default function RegisterScreen() {
           />
           
           <Input
-            label="Password"
-            placeholder="Create a password"
+            label="Senha"
+            placeholder="Crie uma senha"
             value={password}
             onChangeText={setPassword}
             isPassword
           />
           
           <Button
-            title="Sign Up"
+            title="Cadastrar"
             onPress={handleSignUp}
             loading={loading}
             style={styles.signUpButton}
           />
           
           <Text style={styles.termsText}>
-            By signing up, you agree to our Terms of Service and Privacy Policy
+            Ao se cadastrar, você concorda com nossos Termos de Serviço e Política de Privacidade
           </Text>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
+          <Text style={styles.footerText}>Já tem uma conta?</Text>
           <TouchableOpacity onPress={() => router.push('/auth/login')}>
-            <Text style={styles.footerLink}>Sign In</Text>
+            <Text style={styles.footerLink}>Entrar</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
